@@ -16,6 +16,13 @@ jobs:
       - name: Extract version from tag
         run: echo "VERSION=${GITHUB_REF_NAME#refs/tags/v}" >> $GITHUB_ENV
 
+      - name: Extract publish directory from profile
+        run: |
+          $publishProfilePath = "CsvConverter/Properties/PublishProfiles/FolderProfile.pubxml"
+          $publishDir = (Select-Xml -Path $publishProfilePath -XPath "//PublishDir").Node.InnerText
+          echo "PUBLISH_DIR=$publishDir" >> $GITHUB_ENV
+        shell: pwsh
+
       - name: Update version in .csproj
         run: |
           echo "Updating version in .csproj to ${VERSION}"
@@ -29,10 +36,18 @@ jobs:
       - name: Publish application using publish profile
         run: dotnet publish CsvConverter/CsvConverter.csproj -c Release /p:PublishProfile=Properties\PublishProfiles\FolderProfile.pubxml
 
+      - name: Verify publish output
+        run: |
+          if (!(Test-Path -Path "${{ env.PUBLISH_DIR }}")) {
+              Write-Error "Publish directory does not exist: ${{ env.PUBLISH_DIR }}"
+              exit 1
+          }
+          Write-Host "Publish directory found: ${{ env.PUBLISH_DIR }}"
+
       - name: Archive published binaries
         run: |
-          mkdir -p release
-          powershell Compress-Archive -Path "bin\Publish\*" -DestinationPath "release\CsvConverter-${{ env.VERSION }}.zip"
+          mkdir release
+          powershell Compress-Archive -Path "${{ env.PUBLISH_DIR }}\*" -DestinationPath "release\CsvConverter-${{ env.VERSION }}.zip"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
