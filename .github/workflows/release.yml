@@ -1,18 +1,25 @@
-name: Create Release
+name: Release with Tag Version
 
 on:
   push:
     tags:
-      - 'v*.*.*' # Trigger workflow on version tags like v1.0.0
+      - 'v*.*.*' # Match version tags like v1.0.0
 
 jobs:
   release:
-    name: Create GitHub Release
-    runs-on: ubuntu-latest
+    runs-on: windows-latest # Use a Windows runner
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Extract version from tag
+        run: echo "VERSION=${GITHUB_REF_NAME#refs/tags/v}" >> $GITHUB_ENV
+
+      - name: Update version in .csproj
+        run: |
+          echo "Updating version in .csproj to ${VERSION}"
+          powershell -Command "(Get-Content CsvConverter/CsvConverter.csproj) -replace '<Version>.*</Version>', '<Version>${VERSION}</Version>' | Set-Content CsvConverter/CsvConverter.csproj"
 
       - name: Set up .NET
         uses: actions/setup-dotnet@v3
@@ -28,7 +35,7 @@ jobs:
       - name: Archive binaries
         run: |
           mkdir -p release
-          zip -r release/CsvConverter-${GITHUB_REF_NAME}.zip out/
+          powershell Compress-Archive -Path out\* -DestinationPath release\CsvConverter-${{ env.VERSION }}.zip
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -39,4 +46,4 @@ jobs:
           release_name: ${{ github.ref_name }}
           draft: false
           prerelease: false
-          files: release/CsvConverter-${{ github.ref_name }}.zip
+          files: release\CsvConverter-${{ env.VERSION }}.zip
