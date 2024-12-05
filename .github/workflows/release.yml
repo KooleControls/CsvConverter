@@ -26,16 +26,13 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
-        run: dotnet restore
+      - name: Publish application using publish profile
+        run: dotnet publish CsvConverter/CsvConverter.csproj -c Release /p:PublishProfile=Properties\PublishProfiles\FolderProfile.pubxml
 
-      - name: Publish application
-        run: dotnet publish CsvConverter/CsvConverter.csproj -c Release -o out
-
-      - name: Archive binaries
+      - name: Archive published binaries
         run: |
           mkdir -p release
-          powershell Compress-Archive -Path out\* -DestinationPath release\CsvConverter-${{ env.VERSION }}.zip
+          powershell Compress-Archive -Path "bin\Publish\*" -DestinationPath "release\CsvConverter-${{ env.VERSION }}.zip"
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
