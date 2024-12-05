@@ -45,6 +45,14 @@ jobs:
         run: |
           powershell Compress-Archive -Path "bin\Publish\FrameworkDependent\*" -DestinationPath "release\CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip"
 
+      # Debug: List release directory contents
+      - name: Debug release directory
+        run: |
+          echo "Listing contents of release directory:"
+          dir release
+          echo "Listing contents of bin\Publish:"
+          dir bin\Publish
+
       # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1

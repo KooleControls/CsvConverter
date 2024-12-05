@@ -2,7 +2,7 @@
 
 CsvConverter is a lightweight and flexible tool for converting CSV files to Excel (XLSX) format, with support for column mapping using a YAML configuration file. The application is built with .NET 8 and features a Windows Forms GUI.
 
----
+
 
 ## Features
 
@@ -12,7 +12,7 @@ CsvConverter is a lightweight and flexible tool for converting CSV files to Exce
 - User-friendly GUI with support for selecting multiple files.
 - Progress tracking and cancelation support during conversions.
 
----
+
 
 ## Installation
 
@@ -30,7 +30,7 @@ CsvConverter is a lightweight and flexible tool for converting CSV files to Exce
    - `CsvConverter-FrameworkDependent-x.y.z.zip` (framework-dependent release).
 4. Extract the downloaded archive to a folder of your choice.
 
----
+
 
 ## Usage
 
@@ -57,7 +57,7 @@ Columns:
 
 Place this file in the same directory as the application executable.
 
----
+
 
 ### Why Two Releases?
 
@@ -67,7 +67,7 @@ Providing both self-contained and framework-dependent releases ensures flexibili
 
 Choose the release that best suits your environment!
 
----
+
 
 ## Release Details
 
@@ -85,7 +85,7 @@ CsvConverter provides two types of releases to accommodate different user needs:
 - **Use Case**: Ideal for users who already have the .NET runtime installed and want a smaller download size.
 - **Size**: Smaller file size since it relies on the installed runtime.
 
----
+
 
 ## Development
 
@@ -101,7 +101,7 @@ CsvConverter provides two types of releases to accommodate different user needs:
 2. Open the project in Visual Studio.
 3. Build the solution to generate the executable.
 
----
+
 
 ## Contributing
 
@@ -111,13 +111,13 @@ Contributions are welcome! Please follow these steps:
 3. Commit and push your changes.
 4. Submit a pull request.
 
----
+
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
 
----
+
 
 ## Acknowledgments
 
