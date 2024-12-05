@@ -34,19 +34,6 @@ jobs:
       - name: Publish framework-dependent application
         run: dotnet publish CsvConverter/CsvConverter.csproj -c Release -o bin\Publish\FrameworkDependent /p:SelfContained=false /p:RuntimeIdentifier=win-x86 /p:PublishSingleFile=false /p:PublishReadyToRun=false
 
-      # Verify output directories
-      - name: Verify publish output
-        run: |
-          if (!(Test-Path -Path "bin\Publish\SelfContained")) {
-              Write-Error "Self-contained publish directory does not exist"
-              exit 1
-          }
-          if (!(Test-Path -Path "bin\Publish\FrameworkDependent")) {
-              Write-Error "Framework-dependent publish directory does not exist"
-              exit 1
-          }
-          Write-Host "Publish directories found"
-
       # Archive self-contained version
       - name: Archive self-contained binaries
         run: |
@@ -69,5 +56,5 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            release\CsvConverter-SelfContained-${{ env.VERSION }}.zip
-            release\CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip
+            release/CsvConverter-SelfContained-${{ env.VERSION }}.zip
+            release/CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip

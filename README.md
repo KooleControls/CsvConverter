@@ -18,18 +18,23 @@ CsvConverter is a lightweight and flexible tool for converting CSV files to Exce
 
 ### Prerequisites
 - **Windows 10 or later** (for running .NET 8 applications).
-- **.NET 8 Runtime**: Download and install from the [official .NET website](https://dotnet.microsoft.com/).
+- **.NET 8 Runtime**: Required for the framework-dependent release. Download it from the [official .NET website](https://dotnet.microsoft.com/).
 
 ### Download
 1. Visit the [Releases](https://github.com/KooleControls/CsvConverter/releases) page of this repository.
-2. Download the latest version (zip file or installer).
-3. Extract the downloaded archive or run the installer.
+2. Choose between the two types of releases:
+   - **Self-Contained**: Includes the .NET runtime. No additional installation is required. Recommended for most users.
+   - **Framework-Dependent**: Requires the .NET runtime to be installed on your system. Smaller download size.
+3. Download the appropriate zip file for your needs:
+   - `CsvConverter-SelfContained-x.y.z.zip` (self-contained release).
+   - `CsvConverter-FrameworkDependent-x.y.z.zip` (framework-dependent release).
+4. Extract the downloaded archive to a folder of your choice.
 
 ---
 
 ## Usage
 
-1. Launch the application.
+1. Launch the application by double-clicking the executable (`CsvConverter.exe`).
 2. Add CSV files to convert by selecting **File > Add Files**.
 3. Ensure the `Config.yaml` file is present in the application directory to define column mappings.
 4. Click the **Convert** button to start processing the files.
@@ -51,6 +56,34 @@ Columns:
 ```
 
 Place this file in the same directory as the application executable.
+
+---
+
+### Why Two Releases?
+
+Providing both self-contained and framework-dependent releases ensures flexibility for users with different requirements:
+- **Self-Contained**: For ease of use, especially on systems without .NET.
+- **Framework-Dependent**: For reduced download size when .NET is already installed.
+
+Choose the release that best suits your environment!
+
+---
+
+## Release Details
+
+CsvConverter provides two types of releases to accommodate different user needs:
+
+### Self-Contained Release
+- **File Name**: `CsvConverter-SelfContained-x.y.z.zip`
+- **Description**: Includes the .NET runtime, allowing the application to run without requiring the runtime to be installed on the system.
+- **Use Case**: Recommended for most users, especially on systems without the .NET runtime installed.
+- **Size**: Larger file size due to the included runtime.
+
+### Framework-Dependent Release
+- **File Name**: `CsvConverter-FrameworkDependent-x.y.z.zip`
+- **Description**: Does not include the .NET runtime. Requires the .NET runtime to be installed on the system.
+- **Use Case**: Ideal for users who already have the .NET runtime installed and want a smaller download size.
+- **Size**: Smaller file size since it relies on the installed runtime.
 
 ---
 
