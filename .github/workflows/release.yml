@@ -1,83 +1,96 @@
-name: Release with Tag Version
+name: Build and Release Application Files
 
 on:
   push:
     tags:
-      - 'v*.*.*' # Match version tags like v1.0.0
+      - 'v*'  # Trigger on version tags like v1.0.0
 
 jobs:
-  release:
-    runs-on: windows-latest # Use a Windows runner
+  build:
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v3
+      with:
+        submodules: true
+        fetch-depth: 0
 
-      - name: Extract version from tag
-        run: echo "VERSION=${GITHUB_REF_NAME#refs/tags/v}" >> $GITHUB_ENV
+    - name: Install Visual Studio Build Tools
+      uses: microsoft/setup-msbuild@v1
+      with:
+        vs-version: latest
 
-      - name: Update version in .csproj
-        run: |
-          echo "Updating version in .csproj to ${VERSION}"
-          powershell -Command "(Get-Content CsvConverter/CsvConverter.csproj) -replace '<Version>.*</Version>', '<Version>${VERSION}</Version>' | Set-Content CsvConverter/CsvConverter.csproj"
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '8.x'
+        
+    - name: Extract Version
+      id: get_version
+      uses: battila7/get-version-action@v2.2.1
 
-      - name: Set up .NET
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: '8.0.x'
+    - name: Set project version
+      id: set_version
+      uses: vers-one/dotnet-project-version-updater@v1.6
+      with:
+        file: "CsvConverter/CsvConverter.csproj"
+        version: ${{ steps.get_version.outputs.version-without-v }}
 
-      # Publish self-contained version
-      - name: Publish self-contained application
-        run: dotnet publish CsvConverter/CsvConverter.csproj -c Release -o bin\Publish\SelfContained /p:SelfContained=true /p:RuntimeIdentifier=win-x86 /p:PublishSingleFile=true /p:PublishReadyToRun=false
+    - name: Restore dependencies
+      run: dotnet restore "CsvConverter/CsvConverter.csproj"
 
-      # Publish framework-dependent version
-      - name: Publish framework-dependent application
-        run: dotnet publish CsvConverter/CsvConverter.csproj -c Release -o bin\Publish\FrameworkDependent /p:SelfContained=false /p:RuntimeIdentifier=win-x86 /p:PublishSingleFile=false /p:PublishReadyToRun=false
+    - name: Build solution
+      run: dotnet build "CsvConverter/CsvConverter.csproj" --configuration Release
 
-      # Archive self-contained version
-      - name: Archive self-contained binaries
-        run: |
-          mkdir release
-          powershell Compress-Archive -Path "bin\Publish\SelfContained\*" -DestinationPath "release\CsvConverter-SelfContained-${{ env.VERSION }}.zip"
+    # Publish the self-contained application
+    - name: Publish Self-Contained Version
+      run: dotnet publish "CsvConverter/CsvConverter.csproj" -c Release -o ./publish/selfcontained /p:SelfContained=true /p:RuntimeIdentifier=win-x86 /p:PublishSingleFile=true
 
-      # Archive framework-dependent version
-      - name: Archive framework-dependent binaries
-        run: |
-          powershell Compress-Archive -Path "bin\Publish\FrameworkDependent\*" -DestinationPath "release\CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip"
+    - name: Create zip archive (Self-Contained)
+      run: |
+        powershell Compress-Archive -Path ./publish/selfcontained/* -DestinationPath ./CsvConverter_SelfContained.zip
 
-      # Create GitHub Release with Release Notes
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref_name }}
-          release_name: Release ${{ github.ref_name }}
-          body_path: notes/${{ github.ref_name }}.md
-          draft: false
-          prerelease: false
+    # Publish the framework-dependent application
+    - name: Publish Framework-Dependent Version
+      run: dotnet publish "CsvConverter/CsvConverter.csproj" -c Release -o ./publish/frameworkdependent /p:SelfContained=false /p:RuntimeIdentifier=win-x86 /p:PublishSingleFile=false
 
-      # Upload self-contained version
-      - name: Upload Self-Contained Version
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/CsvConverter-SelfContained-${{ env.VERSION }}.zip
-          asset_name: CsvConverter-SelfContained-${{ env.VERSION }}.zip
-          asset_content_type: application/zip
-          label: "CsvConverter Self-Contained Version"
+    - name: Create zip archive (Framework-Dependent)
+      run: |
+        powershell Compress-Archive -Path ./publish/frameworkdependent/* -DestinationPath ./CsvConverter_FrameworkDependent.zip
 
-      # Upload framework-dependent version
-      - name: Upload Framework-Dependent Version
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip
-          asset_name: CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip
-          asset_content_type: application/zip
-          label: "CsvConverter Framework-Dependent Version"
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body_path: notes/${{ github.ref_name }}.md  # Reference the correct release notes file based on the tag
+        draft: false
+        prerelease: false
+
+    - name: Upload Self-Contained Version
+      id: upload-release-asset-selfcontained
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./CsvConverter_SelfContained.zip
+        asset_name: CsvConverter_SelfContained.zip
+        asset_content_type: application/zip
+        label: "CsvConverter Self-Contained Version"
+
+    - name: Upload Framework-Dependent Version
+      id: upload-release-asset-frameworkdependent
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./CsvConverter_FrameworkDependent.zip
+        asset_name: CsvConverter_FrameworkDependent.zip
+        asset_content_type: application/zip
+        label: "CsvConverter Framework-Dependent Version"
