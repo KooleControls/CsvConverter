@@ -59,6 +59,16 @@ jobs:
       run: |
         powershell Compress-Archive -Path ./publish/frameworkdependent/* -DestinationPath ./CsvConverter_FrameworkDependent.zip
 
+    - name: Check for Release Notes
+      id: check_notes
+      run: |
+        if (Test-Path -Path notes/${{ github.ref_name }}.md) {
+          echo "notes_file=notes/${{ github.ref_name }}.md" >> $env:GITHUB_ENV
+        } else {
+          echo "notes_file=" >> $env:GITHUB_ENV
+        }
+      shell: pwsh
+
     - name: Create Release
       id: create_release
       uses: actions/create-release@v1
@@ -67,7 +77,7 @@ jobs:
       with:
         tag_name: ${{ github.ref }}
         release_name: Release ${{ github.ref }}
-        body_path: notes/${{ github.ref_name }}.md  # Reference the correct release notes file based on the tag
+        body_path: ${{ env.notes_file }}
         draft: false
         prerelease: false
 
