@@ -16,13 +16,6 @@ jobs:
       - name: Extract version from tag
         run: echo "VERSION=${GITHUB_REF_NAME#refs/tags/v}" >> $GITHUB_ENV
 
-      - name: Extract publish directory from profile
-        run: |
-          $publishProfilePath = "CsvConverter/Properties/PublishProfiles/FolderProfile.pubxml"
-          $publishDir = (Select-Xml -Path $publishProfilePath -XPath "//PublishDir").Node.InnerText
-          echo "PUBLISH_DIR=$publishDir" >> $GITHUB_ENV
-        shell: pwsh
-
       - name: Update version in .csproj
         run: |
           echo "Updating version in .csproj to ${VERSION}"
@@ -33,22 +26,39 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
-      - name: Publish application using publish profile
-        run: dotnet publish CsvConverter/CsvConverter.csproj -c Release /p:PublishProfile=Properties\PublishProfiles\FolderProfile.pubxml
+      # Publish self-contained version
+      - name: Publish self-contained application
+        run: dotnet publish CsvConverter/CsvConverter.csproj -c Release -o bin\Publish\SelfContained /p:SelfContained=true /p:RuntimeIdentifier=win-x86 /p:PublishSingleFile=true /p:PublishReadyToRun=false
 
+      # Publish framework-dependent version
+      - name: Publish framework-dependent application
+        run: dotnet publish CsvConverter/CsvConverter.csproj -c Release -o bin\Publish\FrameworkDependent /p:SelfContained=false /p:RuntimeIdentifier=win-x86 /p:PublishSingleFile=false /p:PublishReadyToRun=false
+
+      # Verify output directories
       - name: Verify publish output
         run: |
-          if (!(Test-Path -Path "${{ env.PUBLISH_DIR }}")) {
-              Write-Error "Publish directory does not exist: ${{ env.PUBLISH_DIR }}"
+          if (!(Test-Path -Path "bin\Publish\SelfContained")) {
+              Write-Error "Self-contained publish directory does not exist"
               exit 1
           }
-          Write-Host "Publish directory found: ${{ env.PUBLISH_DIR }}"
+          if (!(Test-Path -Path "bin\Publish\FrameworkDependent")) {
+              Write-Error "Framework-dependent publish directory does not exist"
+              exit 1
+          }
+          Write-Host "Publish directories found"
 
-      - name: Archive published binaries
+      # Archive self-contained version
+      - name: Archive self-contained binaries
         run: |
           mkdir release
-          powershell Compress-Archive -Path "${{ env.PUBLISH_DIR }}\*" -DestinationPath "release\CsvConverter-${{ env.VERSION }}.zip"
+          powershell Compress-Archive -Path "bin\Publish\SelfContained\*" -DestinationPath "release\CsvConverter-SelfContained-${{ env.VERSION }}.zip"
 
+      # Archive framework-dependent version
+      - name: Archive framework-dependent binaries
+        run: |
+          powershell Compress-Archive -Path "bin\Publish\FrameworkDependent\*" -DestinationPath "release\CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip"
+
+      # Create GitHub Release
       - name: Create GitHub Release
         uses: actions/create-release@v1
         env:
@@ -58,4 +68,6 @@ jobs:
           release_name: ${{ github.ref_name }}
           draft: false
           prerelease: false
-          files: release\CsvConverter-${{ env.VERSION }}.zip
+          files: |
+            release\CsvConverter-SelfContained-${{ env.VERSION }}.zip
+            release\CsvConverter-FrameworkDependent-${{ env.VERSION }}.zip
