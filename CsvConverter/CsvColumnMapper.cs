@@ -13,8 +13,8 @@ namespace CsvConverter
         private readonly ILogger<CsvColumnMapper> logger;
         public CsvColumnMapper(ILogger<CsvColumnMapper> logger, string configFile)
         {
-            columnMapping = LoadColumnMapping(configFile);
             this.logger = logger;
+            columnMapping = LoadColumnMapping(configFile);
         }
         public async Task<bool> ConvertAsync(string inputFile, string outputFile, CancellationToken token)
         {

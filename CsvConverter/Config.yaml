@@ -1,7 +1,7 @@
-﻿Columns:
-  - Input: "CSV Column Name 1"
-    OutputIndex: 1
-    Output: "Excel Header 1"
-  - Input: "CSV Column Name 2"
-    OutputIndex: 2
-    Output: "Excel Header 2"
+﻿columns:
+  - input: "csv column name 1"
+    outputIndex: 1
+    output: "xlsx column name 1"
+  - input: "csv column name 2"
+    outputIndex: 2
+    output: "xlsx column name 2"
